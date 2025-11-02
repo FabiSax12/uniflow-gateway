@@ -1,0 +1,89 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: academic_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    networks:
+      - gateway-network
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    networks:
+      - gateway-network
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8000:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - academic-service
+      - tasks-service
+      - notifications-service
+    networks:
+      - gateway-network
+
+  academic-service:
+    build: ../academic-service
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/academic_db
+      - SPRING_DATASOURCE_USERNAME=admin
+      - SPRING_DATASOURCE_PASSWORD=password
+    expose:
+      - "3001"
+    depends_on:
+      - postgres
+    networks:
+      - gateway-network
+
+  tasks-service:
+    build: ../uniflow-tasks-api
+    environment:
+      - NODE_ENV=development
+      - PORT=3002
+      - MONGO_URI=mongodb://mongo:27017/tasks_db
+    expose:
+      - "3002"
+    depends_on:
+      - mongo
+    networks:
+      - gateway-network
+
+  notifications-service:
+    build: ../uniflow-notification-service
+    environment:
+      - NODE_ENV=development
+      - PORT=3003
+      - MONGODB_URI=mongodb://mongo:27017/notifications_db
+    expose:
+      - "3003"
+    depends_on:
+      - mongo
+    networks:
+      - gateway-network
+
+  uniflow-app:
+    build: ../UniFlow-Frontend
+    environment:
+      - VITE_ENV=development
+      - VITE_API_BASE_URL=http://localhost:8000
+      - VITE_ACADEMIC_SERVICE_URL=http://localhost:8000/academic
+      - VITE_TASKS_SERVICE_URL=http://localhost:8000/tasks
+      - VITE_NOTIFICATIONS_SERVICE_URL=http://localhost/notifications
+      - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
+      - VITE_GOOGLE_CLIENT_SECRET=${VITE_GOOGLE_CLIENT_SECRET}
+    ports:
+      - "3000:3000"
+
+networks:
+  gateway-network:
+    driver: bridge
