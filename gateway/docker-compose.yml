@@ -31,7 +31,7 @@ services:
       - gateway-network
 
   academic-service:
-    build: ../academic-service
+    build: ../uniflow-academic-service
     environment:
       - NODE_ENV=development
       - PORT=3001
@@ -70,19 +70,6 @@ services:
       - mongo
     networks:
       - gateway-network
-
-  uniflow-app:
-    build: ../UniFlow-Frontend
-    environment:
-      - VITE_ENV=development
-      - VITE_API_BASE_URL=http://localhost:8000
-      - VITE_ACADEMIC_SERVICE_URL=http://localhost:8000/academic
-      - VITE_TASKS_SERVICE_URL=http://localhost:8000/tasks
-      - VITE_NOTIFICATIONS_SERVICE_URL=http://localhost/notifications
-      - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
-      - VITE_GOOGLE_CLIENT_SECRET=${VITE_GOOGLE_CLIENT_SECRET}
-    ports:
-      - "3000:3000"
 
 networks:
   gateway-network:

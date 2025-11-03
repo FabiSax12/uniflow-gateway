@@ -17,7 +17,7 @@ git clone https://github.com/FabiSax12/uniflow-notification-service.git
 docker compose -f ./gateway/docker-compose.yml up -d
 ```
 
-## Frontend
+## Frontend (Opcional)
 
 ```bash
 git clone https://github.com/FabiSax12/UniFlow-Frontend.git
