@@ -1,4 +1,6 @@
 services:
+
+  # Databases
   postgres:
     image: postgres:16-alpine
     environment:
@@ -17,6 +19,27 @@ services:
     networks:
       - gateway-network
 
+  # Cache
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    networks:
+      - gateway-network
+  
+  # Azure Services
+  ## Azure Queue Storage
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:latest
+    ports:
+      - "10000:10000"  # Blob
+      - "10001:10001"  # Queue
+      - "10002:10002"  # Table
+    command: azurite-queue --queueHost 0.0.0.0
+    networks:
+      - gateway-network
+
+  ## Azure APIM
   nginx:
     image: nginx:alpine
     ports:
@@ -30,6 +53,23 @@ services:
     networks:
       - gateway-network
 
+  ## Azure Functions
+  notifications-function:
+    build: ../uniflow-notification-function
+    environment:
+      - AzureWebJobsStorage=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;QueueEndpoint=http://azurite:10001/devstoreaccount1;
+      - FUNCTIONS_WORKER_RUNTIME=node
+      - NOTIFICATION_SERVICE_URL=http://notifications-service:3003
+      - AzureFunctionsJobHost__functionTimeout=00:05:00
+      - AzureFunctionsJobHost__Concurrency__SnapshotPersistenceEnabled=false
+    ports:
+      - "7071:80"
+    depends_on:
+      - azurite
+      - notifications-service
+    networks:
+      - gateway-network
+  # Micro sercices
   academic-service:
     build: ../uniflow-academic-service
     environment:
@@ -51,10 +91,14 @@ services:
       - NODE_ENV=development
       - PORT=3002
       - MONGO_URI=mongodb://mongo:27017/tasks_db
+      - AZURE_QUEUE_URL=http://azurite:10001/devstoreaccount1
+      - AZURE_STORAGE_ACCOUNT=devstoreaccount1
+      - AZURE_STORAGE_KEY=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
     expose:
       - "3002"
     depends_on:
       - mongo
+      - azurite
     networks:
       - gateway-network
 
@@ -64,10 +108,16 @@ services:
       - NODE_ENV=development
       - PORT=3003
       - MONGODB_URI=mongodb://mongo:27017/notifications_db
+      - ACADEMIC_SERVICE_URL=http://academic-service:3001
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_TTL=3600
+      - REDIS_MAX_ITEMS=100
     expose:
       - "3003"
     depends_on:
       - mongo
+      - redis
     networks:
       - gateway-network
 

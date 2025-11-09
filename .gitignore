@@ -1,6 +1,7 @@
 UniFlow-Frontend
 uniflow-notification-service
 uniflow-tasks-api
-academic-service
+uniflow-academic-service
+uniflow-notification-function
 
 .env
