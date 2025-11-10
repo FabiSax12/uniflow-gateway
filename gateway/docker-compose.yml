@@ -78,6 +78,10 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/academic_db
       - SPRING_DATASOURCE_USERNAME=admin
       - SPRING_DATASOURCE_PASSWORD=password
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS}
     expose:
       - "3001"
     depends_on:
@@ -94,6 +98,7 @@ services:
       - AZURE_QUEUE_URL=http://azurite:10001/devstoreaccount1
       - AZURE_STORAGE_ACCOUNT=devstoreaccount1
       - AZURE_STORAGE_KEY=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
+      - JWT_SECRET=${JWT_SECRET}
     expose:
       - "3002"
     depends_on:
